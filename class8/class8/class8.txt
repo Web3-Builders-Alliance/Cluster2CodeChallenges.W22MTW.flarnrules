@@ -1,0 +1,106 @@
+Submessages
+    - returns a Reply
+    - Useful for getting a contract address when instantiating
+    - Handle error instead of rolling back
+    - Execute action and assert that result was successful
+
+If you need a contract to insantiate an nft contract
+    - you can keep track of which contracts have been instantiated
+    - you can then save those contract addresses in the "mother contract"
+    - you can say insantiation was complete.
+    - instead of assuming.
+
+Different types of Submessage Reply
+
+pub enum reply
+    - Always,
+    // Always perform a callback after subMsg is processed
+
+    - Error,
+    // Only callback if SubMsg returned an error, no callback on success case
+
+    - Success,
+    // Only callback if SubMsg was successful, no callback on error case
+
+    - Never,
+    // Never make a callback - this is like the original CosmosMsg semantics
+
+
+pub fun reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
+    match msg.id {
+        INSTANTIATE_REPLY_ID => handle_instantiate_reply(deps, msg),
+    }
+}
+
+Submessage
+
+let submessage:SubMsg = SubMsg {
+    gas_limit: None,
+    id: INSTANTIATE_REPLY_ID,
+    reply_on: ReplyOn::Success,
+    msg: instantiate_message.into()
+}
+
+Helpers
+
+SubMsg::reply_always(msg, id)
+SubMsg::reply_on_error(msg, id)
+SubMsg::reply_on_success(msg, id)
+
+==
+
+let submessage:SubMsg<Empty> =
+SubMsg::reply_on_success(instantiate_msg, INSTATIATE_REPLY_ID);
+
+Ok(Response::new().ad_submessage(submessage))
+
+=
+
+Reply Helpers
+    - cosmwasm plus
+    - cw-utils package
+
+    - parse_reply_instantiate_data()
+    // good for getting contract addresses
+
+    - parse_reply_execute_data()
+    // returns raw data back to you
+
+=
+
+code challenge:
+
+    - write the try_increment function in contract.rs (in the manager folder) (YES)
+    - write the create_counter_and_increment twice test (YES)
+    - write the create_counter_and_reset test (YES)
+    - write the create_two_counters_and_increment_each test (YES)
+    - create a workspace Cargo.toml
+        - Move the counter and manager packages into a single workspace called "contracts"
+        - create a Cargo.toml file
+        - make sure the 
+    
+    - use the workspace optimizer to compile the contract
+            docker run --rm -v "$(pwd)":/code \
+            --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+            --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+            cosmwasm/workspace-optimizer:0.12.10
+
+    - add a Node folder and upload to the Juno testnet
+        - copy the node folder that's in messages
+        - https://github.com/ivmidable/messages/tree/1.0/node
+        - need to point it to the new wasm files (just a matter of changing the name)
+        - use intantiate test
+
+    - rewrite the integration tests in Typescript and test on the Testnet
+        - write these tests same as 
+
+https://github.com/ivmidable/manager-example-incomplete
+
+https://docs.google.com/presentation/d/1PZvegPANu9VYj80rBUhJ631AjUE4TtfuJUzH_-odkwI/edit#slide=id.g14463eb45ed_0_0
+
+https://soroban.stellar.org/docs/tutorials/build-optimized
+
+try increment has to check to see if it exists
+calls increment increment message
+add submessage increment reply id
+send submessage off with response
